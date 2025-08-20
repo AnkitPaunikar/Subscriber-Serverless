@@ -4,7 +4,7 @@ A Java Spring Boot application packaged and deployed as a serverless AWS Lambda 
 
 ## Purpose
 
-Subscriber-Serverless is designed to provide a lightweight, event-driven microservice for handling subscriber-related events—such as creation, updates, and notifications—without managing dedicated server infrastructure.
+Subscriber-Serverless is designed to provide a lightweight, event driven microservice for handling subscriber related events such as creation, updates, and notifications without managing dedicated server infrastructure.
 
 ## Problem Statement
 
