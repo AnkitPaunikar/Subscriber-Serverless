@@ -172,7 +172,7 @@ Based on AWS and independent benchmarking studies:
    aws lambda publish-version --function-name SubscriberHandler
    ```
 
-5. **Create Function URL
+5. **Create Function URL**
    - Enable function URL (Auth: NONE for testing)
 
 6. **Configure Event Source**  
@@ -181,7 +181,7 @@ Based on AWS and independent benchmarking studies:
    - For HTTP: Create an API Gateway proxy integration to the Lambda
 
 ## Usage
-**Create subscriber
+  **Create subscriber**
   ```
   curl -X POST $FUNCTION_URL
   -H 'spring.cloud.function.definition: create'
@@ -189,7 +189,7 @@ Based on AWS and independent benchmarking studies:
   -d 'user@example.com'
   ```
 
-  **Get all subscribers
+  **Get all subscribers**
   ```
   curl $FUNCTION_URL
   -H 'spring.cloud.function.definition: findAll'
