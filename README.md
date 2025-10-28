@@ -15,14 +15,18 @@ Traditional subscriber-management services require always-on servers, leading to
 
 These challenges slow development cycles and inflate cost for low-throughput or spiky event loads.
 
-## Solution Overview
+## Why this approach?
 
-Subscriber-Serverless leverages Spring Cloud Function and AWS Lambda to:
-- Dynamically scale with incoming event load  
-- Eliminate server management and idle-time costs  
-- Simplify continuous integration and deployment pipelines  
+This project uses Spring Cloud Function to abstract away cloud provider differences and enable a consistent, reusable serverless programming model:
 
-By packaging Spring Boot event handlers as Lambda functions, the service processes subscriber messages (from SNS, SQS, or API Gateway) seamlessly and only incurs compute charges when actively running.
+- Simplifies serverless application development without vendor lock-in
+- Supports deployment to AWS Lambda with easy migration potential to other clouds
+- Combines Spring Boot's productivity with serverless features like auto-scaling and pay-per-use billing
+- Bundles multiple functions in one deployment with flexible routing via function names or URLs
+- Avoids multiple disjoint Lambdas and complex API Gateway setups by grouping related functions
+- Leverages Spring ecosystem for dependency injection, configuration, and logging
+
+This makes serverless development efficient and scalable for real-world microservice use cases.
 
 ### How It Helps
 
@@ -148,7 +152,7 @@ Based on AWS and independent benchmarking studies:
 
 2. **Build the deployment package with optimization**  
    ```bash
-   mvn clean package -Dspring.aot.enabled=true
+   mvn clean package
    ```
 
 3. **Deploy to AWS Lambda with SnapStart**  
@@ -156,9 +160,9 @@ Based on AWS and independent benchmarking studies:
    aws lambda create-function \
      --function-name SubscriberHandler \
      --package-type Zip \
-     --zip-file fileb://target/subscriber-serverless-0.0.1-SNAPSHOT.jar \
+     --zip-file fileb://target/subscriber-serverless-0.0.1-SNAPSHOT-lambda.jar \
      --handler org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest \
-     --runtime java17 \
+     --runtime java21 \
      --role arn:aws:iam::123456789012:role/LambdaExecutionRole \
      --snap-start ApplyOn=PublishedVersions
    ```
@@ -168,28 +172,28 @@ Based on AWS and independent benchmarking studies:
    aws lambda publish-version --function-name SubscriberHandler
    ```
 
-5. **Configure Event Source**  
+5. **Create Function URL
+   - Enable function URL (Auth: NONE for testing)
+
+6. **Configure Event Source**  
    - For SNS: Subscribe the Lambda to an SNS topic  
    - For SQS: Add the Lambda as an SQS queue consumer  
    - For HTTP: Create an API Gateway proxy integration to the Lambda
 
 ## Usage
+**Create subscriber
+  ```
+  curl -X POST $FUNCTION_URL
+  -H 'spring.cloud.function.definition: create'
+  -H 'Content-Type: text/plain'
+  -d 'user@example.com'
+  ```
 
-Invoke the function by publishing a JSON-formatted subscriber event:
-
-```json
-{
-  "subscriberId": "abc123",
-  "action": "CREATE",
-  "email": "user@example.com",
-  "metadata": {
-    "source": "web-app",
-    "timestamp": "2025-08-20T10:26:00Z"
-  }
-}
-```
-
-Lambda logs and response status can be viewed in CloudWatch Logs with structured logging for better observability.
+  **Get all subscribers
+  ```
+  curl $FUNCTION_URL
+  -H 'spring.cloud.function.definition: findAll'
+  ```
 
 ## Performance Monitoring
 
@@ -206,6 +210,15 @@ Expected performance metrics:
 - **Cold start duration**: 200-400ms with SnapStart
 - **Warm execution**: 10-50ms
 - **Memory utilization**: 128-512MB typical
+
+## Troubleshooting
+  
+| Issue                                     | Solution                                                                                          |
+|-------------------------------------------|---------------------------------------------------------------------------------------------------|
+| ClassNotFound: FunctionInvoker            | Deploy the shaded `-lambda.jar`, not regular Spring Boot jar                                      |
+| Failed to discover Main Class             | Ensure correct Lambda handler and jar                                                             |
+| Function definition not recognized        | Verify `spring.cloud.function.definition` header spelling                                         |
+| Missing or wrong Lambda handler           | Use base handler: `org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest` |
 
 ## Customization
 
